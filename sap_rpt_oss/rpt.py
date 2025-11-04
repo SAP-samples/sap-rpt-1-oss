@@ -66,7 +66,7 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
 
     def __init__(self,
                  checkpoint: str = '2025-11-04_sap-rpt-one-oss.pt',
-                 bagging: Union[Literal['auto'], int] = 1,
+                 bagging: Union[Literal['auto'], int] = 8,
                  max_context_size: int = 8192,
                  drop_constant_columns: bool = True,
                  test_chunk_size: int = 1000):

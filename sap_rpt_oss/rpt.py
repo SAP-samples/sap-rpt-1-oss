@@ -57,7 +57,7 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
             - cross-entropy - class likelihood prediction using cross entropy loss during training
             - clustering - class prediction using similarity between context and query vectors
             - clustering-cosine - class prediction using cosine similarity between context and query vectors 
-        is_drop_constant_columns: flag to indicate to drop constant columns in the input dataframe
+        drop_constant_columns: flag to indicate to drop constant columns in the input dataframe
         test_chunk_size: Batch size of test rows to use for prediction at once
     """
     classification_or_regression: str

@@ -72,7 +72,6 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
                  test_chunk_size: int = 1000):
 
         self.model_size = ModelSize.base
-        self.checkpoint_revision = checkpoint_revision
         self.checkpoint = checkpoint
         self._checkpoint_path = hf_hub_download(repo_id="SAP/sap-rpt-1-oss", filename=checkpoint)
         self.bagging = bagging

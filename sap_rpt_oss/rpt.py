@@ -73,13 +73,16 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
 
         self.model_size = ModelSize.base
         self.checkpoint = checkpoint
+        self.regression_type = "l2"
+        self.classification_type = "cross-entropy"
+        self.test_chunk_size = test_chunk_size
         self._checkpoint_path = hf_hub_download(repo_id="SAP/sap-rpt-1-oss", filename=checkpoint)
         self.bagging = bagging
         if not isinstance(bagging, int) and bagging != 'auto':
             raise ValueError('bagging must be an integer or "auto"')
         self.max_context_size = max_context_size
         self.num_regression_bins = 16
-        self.model = RPT(self.model_size, regression_type="l2", classification_type="cross-entropy")
+        self.model = RPT(self.model_size, regression_type=self.regression_type, classification_type=self.classification_type)
         # We're using a single GPU here, even if more are available
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         start_embedding_server(Tokenizer.sentence_embedding_model_name)
@@ -93,19 +96,16 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
             self.dtype = torch.float32
 
         self.model.load_weights(Path(self._checkpoint_path), self.device)
-        self.regression_type = "l2"
         self.seed = 42
         self.is_drop_constant_columns = drop_constant_columns
         self.tokenizer = Tokenizer(
-            regression_type="l2",
-            classification_type=classification_type,
+            regression_type=self.regression_type,
+            classification_type=self.classification_type,
             zmq_port=ZMQ_PORT_DEFAULT,  # Only one GPU supported
             random_seed=self.seed,
-            num_regression_bins=num_regression_bins,
+            num_regression_bins=self.num_regression_bins,
             is_valid=True)
         self.model.to(self.device).eval()
-        self.classification_type = classification_type
-        self.test_chunk_size = test_chunk_size
 
     @abstractmethod
     def task_specific_fit(self):

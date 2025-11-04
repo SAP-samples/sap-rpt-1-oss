@@ -97,7 +97,7 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
 
         self.model.load_weights(Path(self._checkpoint_path), self.device)
         self.seed = 42
-        self.is_drop_constant_columns = drop_constant_columns
+        self.drop_constant_columns = drop_constant_columns
         self.tokenizer = Tokenizer(
             regression_type=self.regression_type,
             classification_type=self.classification_type,
@@ -180,7 +180,7 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
 
         df = pd.concat([df_train, df_test], ignore_index=True)
 
-        if self.is_drop_constant_columns:
+        if self.drop_constant_columns:
             X = df.iloc[:, :-1]
             y = df.iloc[:, -1:]
             constant_cols = list(X.columns[X.nunique() == 1])

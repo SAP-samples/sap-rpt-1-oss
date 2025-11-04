@@ -9,9 +9,9 @@ import torch
 import zmq
 
 
-from contexttab.data.sentence_embedder import SentenceEmbedder
-from contexttab.utils.lru_cache import LRU_Cache
-from contexttab.constants import ZMQ_PORT_DEFAULT
+from sap_rpt_oss.data.sentence_embedder import SentenceEmbedder
+from sap_rpt_oss.utils.lru_cache import LRU_Cache
+from sap_rpt_oss.constants import ZMQ_PORT_DEFAULT
 
 
 

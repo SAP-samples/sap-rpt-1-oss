@@ -11,7 +11,7 @@ from typing import Optional
 
 import zmq
 
-from contexttab.constants import ZMQ_PORT_DEFAULT, embedding_model_to_dimension_and_pooling
+from sap_rpt_oss.constants import ZMQ_PORT_DEFAULT, embedding_model_to_dimension_and_pooling
 
 
 def is_port_in_use(port: int) -> bool:
@@ -29,7 +29,7 @@ def start_embedding_server(sentence_embedding_model_name: str, gpu_idx: Optional
         print('Port already in use, not starting again.')
     else:
         commands = [
-            sys.executable, '-m', 'contexttab.scripts.zmq_server', '--port',
+            sys.executable, '-m', 'sap_rpt_oss.scripts.zmq_server', '--port',
             str(zmq_port), '--gpu_idx',
             str(gpu_idx), '-semn', sentence_embedding_model_name
         ]

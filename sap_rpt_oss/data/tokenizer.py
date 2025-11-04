@@ -14,8 +14,8 @@ import torch
 import zmq
 from sklearn.preprocessing import StandardScaler
 
-from contexttab.constants import QUANTILE_DIMENSION_DEFAULT, ZMQ_PORT_DEFAULT, embedding_model_to_dimension_and_pooling
-from contexttab.scripts.start_embedding_server import start_embedding_server
+from sap_rpt_oss.constants import QUANTILE_DIMENSION_DEFAULT, ZMQ_PORT_DEFAULT, embedding_model_to_dimension_and_pooling
+from sap_rpt_oss.scripts.start_embedding_server import start_embedding_server
 
 
 class Tokenizer:

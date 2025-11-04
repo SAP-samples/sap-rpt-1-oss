@@ -41,22 +41,16 @@ version = get_version(version_file)
 requirements = get_requirements(requirements_file)
 
 setup(
-    name="contexttab",
+    name="sap_rpt_oss",
     version=version,
     author="SAP",
     author_email="marco.spinaci@sap.com, marek.polewczyk@sap.com, maximilian.schambach@sap.com",
-    description="ConTextTab deep learning model",
-    packages=find_packages(include=["contexttab", "contexttab.*"]),
-    package_data={
-        "contexttab": [
-            "checkpoints/l2/base.pt", "*.lfs"
-        ],
-    },
-    include_package_data=True,
+    description="sap-rpt-oss deep learning model",
+    packages=find_packages(include=["sap_rpt_oss", "sap_rpt_oss.*"]),
     # test with: python setup.py bdist_wheel
     classifiers=["Git :: Commit ID :: {}".format(get_git_commit_id()), "Programming Language :: Python :: 3.11"],
     python_requires=">=3.11",
     zip_safe=False,
-    url="https://github.com/SAP-samples/contexttab.git",
+    url="https://github.com/SAP-samples/sap-rpt-1-oss.git",
     install_requires=requirements,
 )

@@ -17,10 +17,10 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_is_fitted
 
-from contexttab.constants import ZMQ_PORT_DEFAULT, ModelSize
-from contexttab.scripts.start_embedding_server import start_embedding_server
-from contexttab.data.tokenizer import Tokenizer
-from contexttab.model.torch_model import ConTextTab
+from sap_rpt_oss.constants import ZMQ_PORT_DEFAULT, ModelSize
+from sap_rpt_oss.scripts.start_embedding_server import start_embedding_server
+from sap_rpt_oss.data.tokenizer import Tokenizer
+from sap_rpt_oss.model.torch_model import RPT
 
 warnings.filterwarnings('ignore', message='.*not support non-writable tensors.*')
 
@@ -37,8 +37,8 @@ def to_device(x, device: Union[torch.device, int], dtype: Optional[torch.dtype] 
     return x
 
 
-class ConTextTabEstimator(BaseEstimator, ABC):
-    """ConTextTabEstimator class.
+class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
+    """SAP_RPT_OSS_Estimator (sap-rpt-1-oss) class.
 
     Args:
         checkpoint: path to the checkpoint file; must be of size base model size
@@ -58,33 +58,29 @@ class ConTextTabEstimator(BaseEstimator, ABC):
             - clustering - class prediction using similarity between context and query vectors
             - clustering-cosine - class prediction using cosine similarity between context and query vectors 
         is_drop_constant_columns: flag to indicate to drop constant columns in the input dataframe
-        test_chunk_size: number of test rows to use for prediction at once
+        test_chunk_size: Batch size of test rows to use for prediction at once
     """
     classification_or_regression: str
     MAX_AUTO_BAGS = 16
     MAX_NUM_COLUMNS = 500
 
     def __init__(self,
-                 checkpoint: str = 'l2/base.pt',
-                 checkpoint_revision: str = 'v1.0.0',
+                 checkpoint: str = '2025-11-04_sap-rpt-one-oss.pt',
                  bagging: Union[Literal['auto'], int] = 1,
                  max_context_size: int = 8192,
-                 num_regression_bins: int = 16,
-                 regression_type: Literal['reg-as-classif', 'l2'] = 'l2',
-                 classification_type: Literal['cross-entropy', 'clustering', 'clustering-cosine'] = 'cross-entropy',
-                 is_drop_constant_columns: bool = True,
+                 drop_constant_columns: bool = True,
                  test_chunk_size: int = 1000):
 
         self.model_size = ModelSize[checkpoint.split('/')[-1].split('.')[0]]
         self.checkpoint_revision = checkpoint_revision
         self.checkpoint = checkpoint
-        self._checkpoint_path = hf_hub_download(repo_id="SAP/contexttab", filename=checkpoint, revision=checkpoint_revision)
+        self._checkpoint_path = hf_hub_download(repo_id="SAP/sap-rpt-1-oss", filename=checkpoint)
         self.bagging = bagging
         if not isinstance(bagging, int) and bagging != 'auto':
             raise ValueError('bagging must be an integer or "auto"')
         self.max_context_size = max_context_size
-        self.num_regression_bins = num_regression_bins
-        self.model = ConTextTab(self.model_size, regression_type=regression_type, classification_type=classification_type)
+        self.num_regression_bins = 16
+        self.model = RPT(self.model_size, regression_type="l2", classification_type="cross-entropy")
         # We're using a single GPU here, even if more are available
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         start_embedding_server(Tokenizer.sentence_embedding_model_name)
@@ -100,7 +96,7 @@ class ConTextTabEstimator(BaseEstimator, ABC):
         self.model.load_weights(Path(self._checkpoint_path), self.device)
         self.regression_type = regression_type
         self.seed = 42
-        self.is_drop_constant_columns = is_drop_constant_columns
+        self.is_drop_constant_columns = drop_constant_columns
         self.tokenizer = Tokenizer(
             regression_type=regression_type,
             classification_type=classification_type,
@@ -230,7 +226,7 @@ class ConTextTabEstimator(BaseEstimator, ABC):
         pass
 
 
-class ConTextTabClassifier(ClassifierMixin, ConTextTabEstimator):
+class SAP_RPT_OSS_Classifier(ClassifierMixin, SAP_RPT_OSS_Estimator):
     classification_or_regression = 'classification'
 
     def task_specific_fit(self):
@@ -324,7 +320,7 @@ class ConTextTabClassifier(ClassifierMixin, ConTextTabEstimator):
         return probs.numpy()
 
 
-class ConTextTabRegressor(RegressorMixin, ConTextTabEstimator):
+class SAP_RPT_OSS_Regressor(RegressorMixin, SAP_RPT_OSS_Estimator):
     classification_or_regression = 'regression'
 
     def task_specific_fit(self):

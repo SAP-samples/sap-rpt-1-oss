@@ -6,7 +6,7 @@ import torch
 from typing import Dict, Literal
 from torch import nn
 
-from contexttab.data.tokenizer import Tokenizer
+from sap_rpt_oss.data.tokenizer import Tokenizer
 
 
 class DateEmbeddings(nn.Module):

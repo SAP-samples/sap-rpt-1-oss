@@ -6,7 +6,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 
-from contexttab import ConTextTabRegressor
+from sap_rpt_oss import SAP_RPT_OSS_Regressor
 
 
 # Load sample data
@@ -18,7 +18,7 @@ y = df.target.astype(float)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
 # Initialize the regressor
-regressor = ConTextTabRegressor(bagging=1, max_context_size=2048)
+regressor = SAP_RPT_OSS_Regressor(max_context_size=8192, bagging=8)
 
 regressor.fit(X_train, y_train)
 

@@ -17,16 +17,16 @@ from transformers.activations import gelu
 from transformers.modeling_utils import ModuleUtilsMixin
 from transformers.models.roberta.modeling_roberta import RobertaConfig
 
-from contexttab.constants import ModelSize
-from contexttab.data.tokenizer import Tokenizer
-from contexttab.model.attention import TwoDimensionalAttentionLayer
-from contexttab.model.embeddings import CellEmbeddings
+from sap_rpt_oss.constants import ModelSize
+from sap_rpt_oss.data.tokenizer import Tokenizer
+from sap_rpt_oss.model.attention import TwoDimensionalAttentionLayer
+from sap_rpt_oss.model.embeddings import CellEmbeddings
 
 os.environ['TORCH_CUDNN_SDPA_ENABLED'] = '1'
 
 
-class ConTextTab(nn.Module, ModuleUtilsMixin):
-    """ConTextTab model class.
+class RPT(nn.Module, ModuleUtilsMixin):
+    """RPT (sap-rpt-oss) model class.
 
     Args:
         model_size: size of the model e.g. ModelSize.mini or ModelSize.base

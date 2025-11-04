@@ -7,7 +7,7 @@ from typing import List
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-from contexttab.constants import embedding_model_to_dimension_and_pooling
+from sap_rpt_oss.constants import embedding_model_to_dimension_and_pooling
 
 
 class SentenceEmbedder:

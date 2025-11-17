@@ -13,7 +13,6 @@ embedding_model_to_dimension_and_pooling = {
     'Alibaba-NLP/gte-multilingual-base': (768, 'cls'),
 }
 
-ZMQ_PORT_DEFAULT = 5655
 QUANTILE_DIMENSION_DEFAULT = 64
 
 class ModelSize(Enum):

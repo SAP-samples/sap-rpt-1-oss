@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import warnings
 from abc import ABC, abstractmethod
 from math import ceil
@@ -17,8 +16,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_is_fitted
 
-from sap_rpt_oss.constants import ZMQ_PORT_DEFAULT, ModelSize
-from sap_rpt_oss.scripts.start_embedding_server import start_embedding_server
+from sap_rpt_oss.constants import ModelSize
 from sap_rpt_oss.data.tokenizer import Tokenizer
 from sap_rpt_oss.model.torch_model import RPT
 
@@ -85,7 +83,6 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
         self.model = RPT(self.model_size, regression_type=self.regression_type, classification_type=self.classification_type)
         # We're using a single GPU here, even if more are available
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        start_embedding_server(Tokenizer.sentence_embedding_model_name)
         if torch.cuda.is_available():
             if torch.cuda.get_device_capability(0)[0] >= 8:
                 self.dtype = torch.bfloat16
@@ -101,7 +98,6 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
         self.tokenizer = Tokenizer(
             regression_type=self.regression_type,
             classification_type=self.classification_type,
-            zmq_port=ZMQ_PORT_DEFAULT,  # Only one GPU supported
             random_seed=self.seed,
             num_regression_bins=self.num_regression_bins,
             is_valid=True)

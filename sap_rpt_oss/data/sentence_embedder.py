@@ -11,7 +11,7 @@ from sap_rpt_oss.constants import embedding_model_to_dimension_and_pooling
 
 
 class SentenceEmbedder:
-    def __init__(self, sentence_embedding_model_name, batch_size=256, device=None):
+    def __init__(self, sentence_embedding_model_name, batch_size=512, device=None):
         super().__init__()
         self.sentence_embedding_model_name = sentence_embedding_model_name
         self.model = AutoModel.from_pretrained(sentence_embedding_model_name)
@@ -69,4 +69,4 @@ class SentenceEmbedder:
         embeddings = embeddings.cpu().numpy()
         if self.dtype != torch.float16:
             embeddings = embeddings.astype('float16')
-        return [embedding.tobytes() for embedding in embeddings]
+        return embeddings

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import warnings
 from abc import ABC, abstractmethod
 from math import ceil

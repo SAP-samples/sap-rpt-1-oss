@@ -30,13 +30,11 @@ class Tokenizer:
                  is_valid=False):
         self.regression_type = regression_type
         self.classification_type = classification_type
-        self.socket = None
         self.random_seed = random_seed
         self.num_regression_bins = num_regression_bins
         self.is_valid = is_valid
 
         self.sentence_embedder = SentenceEmbedder(self.sentence_embedding_model_name,
-                                                  32,
                                                   device='cuda' if torch.cuda.is_available() else 'cpu')
         self.cache = LRU_Cache(max_size=int(os.getenv('LRU_CACHE_SIZE', 10_000)))
 

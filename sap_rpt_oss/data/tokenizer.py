@@ -36,7 +36,7 @@ class Tokenizer:
 
         self.sentence_embedder = SentenceEmbedder(self.sentence_embedding_model_name,
                                                   device='cuda' if torch.cuda.is_available() else 'cpu')
-        self.cache = LRU_Cache(max_size=int(os.getenv('LRU_CACHE_SIZE', 10_000)))
+        self.cache = LRU_Cache(max_size=int(os.getenv('LRU_CACHE_SIZE', 1_000_000)))
 
     def texts_to_tensor(self, texts: Collection[str]) -> torch.Tensor:
         if len(texts) == 0:

@@ -54,7 +54,8 @@ class LRU_Cache:
             oldresult = self.root[self.RESULT]
             self.root[self.KEY] = self.root[self.RESULT] = None
             # Now update the cache dictionary.
-            del self.cache[oldkey]
+            if oldkey in self.cache:
+                del self.cache[oldkey]
             # Save the potentially reentrant cache[key] assignment
             # for last, after the root and links have been put in
             # a consistent state.

@@ -149,8 +149,8 @@ class SAP_RPT_OSS_Estimator(BaseEstimator, ABC):
             X_test = pd.DataFrame(X_test, columns=X_train.columns)
         y_test = pd.Series([y_train.iloc[0]] * len(X_test), name=self.y_.name, index=X_test.index)
 
-        df_train = pd.concat([X_train, y_train.to_frame()], axis=1)
-        df_test = pd.concat([X_test, y_test.to_frame()], axis=1)
+        df_train = pd.concat([X_train.reset_index(drop=True), y_train.reset_index(drop=True).to_frame()], axis=1)
+        df_test = pd.concat([X_test.reset_index(drop=True), y_test.reset_index(drop=True).to_frame()], axis=1)
 
         if isinstance(self.bagging_config, int) and self.bagging_config > 1:
             # For bagging, we use replacement

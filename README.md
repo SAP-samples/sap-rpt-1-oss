@@ -123,6 +123,6 @@ No known issues
 If you wish to contribute code, offer fixes or improvements, please send a pull request. Due to legal reasons, contributors will be asked to accept a DCO when they create the first pull request to this project. This happens in an automated fashion during the submission process. SAP uses [the standard DCO text of the Linux Foundation](https://developercertificate.org/).
 
 ## License
-Copyright (c) 2025 SAP SE or an SAP affiliate company. All rights reserved. This project is licensed under the Apache Software License, version 2.0 except as noted otherwise in the [LICENSE](LICENSE) file.
+Copyright (c) 2026 SAP SE or an SAP affiliate company. All rights reserved. This project is licensed under the Apache Software License, version 2.0 except as noted otherwise in the [LICENSE](LICENSE) file.
 
 The model checkpoints have been trained on [the T4 dataset](https://huggingface.co/datasets/mlfoundations/t4-full), which, in turn, is a subset of [the TabLib dataset](https://huggingface.co/datasets/approximatelabs/tablib-v1-full). As such, they inherit the same restrictions described therein and in particular they are only intended for research purposes.

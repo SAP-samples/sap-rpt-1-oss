@@ -113,6 +113,38 @@ print("R² Score:", r2)
 
 
 
+### Faster prediction with a KV cache
+
+Context rows never attend to test rows, so the encoder states of the context do not depend on the test rows.
+With `kv_cache=True`, each bagging iteration runs its context through the model once, keeps the cross-row keys and
+values of every layer, and then runs only the test rows for every test chunk and every later `predict` call.
+
+```python
+clf = SAP_RPT_OSS_Classifier(max_context_size=8192, bagging=8, kv_cache=True)
+clf.fit(X_train, y_train)
+clf.predict_proba(X_test)        # builds one cache per bagging iteration
+clf.predict_proba(X_more)        # reuses them
+clf.clear_kv_cache()             # frees them (fit and parameter changes do it too)
+```
+
+- Predictions match `kv_cache=False` up to floating-point rounding, with one deliberate difference: with a cache,
+  constant columns are detected on the context rows only. Without it they are detected on the context plus the
+  current test chunk, so a column that is constant in the context but varies in the test rows is used by the
+  uncached path and dropped by the cached one (and predictions without a cache depend on how the test rows are
+  chunked).
+- Memory: about 36 KiB per context cell (rows x columns, target included) per bagging iteration in fp16/bf16
+  (2 x 12 layers x 768 x 2 bytes), e.g. 8192 rows x 100 feature columns = 28 GiB.
+  `cache_device='auto'` (default) keeps a cache on the GPU when it takes less than half of the free GPU memory and
+  otherwise in host memory (page-locked, exact size, released with the cache), streamed to the GPU layer by layer
+  on every call. The rule is conservative: when the cache fits next to the working memory, `cache_device='cuda'`
+  is faster for many small calls.
+- `kv_cache='per_call'` frees each cache as soon as its bagging iteration has scored the rows of the current call,
+  so only one cache is in memory at a time.
+- `max_cells_per_batch` caps the number of cells each attention sub-layer processes at once on the cached path.
+  Lowering it (e.g. to 131072) lets an 8192-row context with ~130 columns run on a 16 GB GPU.
+- After changing the model weights (e.g. loading another checkpoint into `clf.model`), call `clf.clear_kv_cache()`.
+- Supported for `classification_type='cross-entropy'` (the released checkpoint) and regression.
+
 ## Known Issues
 No known issues
 

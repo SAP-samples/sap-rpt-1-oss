@@ -25,6 +25,48 @@ from sap_rpt_oss.model.embeddings import CellEmbeddings
 os.environ['TORCH_CUDNN_SDPA_ENABLED'] = '1'
 
 
+class ContextCache(list):
+    """
+    Per-layer (keys, values) of the context rows, built by RPT.build_context_cache.
+
+    On a CPU device the tensors are ordinary (pageable) host memory, page-locked with cudaHostRegister when CUDA
+    is available so that transfers to the GPU are fast. Unlike pin_memory=True (PyTorch's caching host
+    allocator), this takes exactly the requested size and the memory goes back to the OS when the cache is
+    released. Call release() (or drop the last reference) to free it.
+    """
+
+    def __init__(self, device: torch.device):
+        super().__init__()
+        self.device = torch.device(device)
+        self._registered = []
+        self.mask_key, self.mask = None, None
+
+    def empty(self, shape, dtype) -> torch.Tensor:
+        tensor = torch.empty(shape, dtype=dtype, device=self.device)
+        if self.device.type == 'cpu' and torch.cuda.is_available() and tensor.numel():
+            cudart = torch.cuda.cudart()
+            status = cudart.cudaHostRegister(tensor.data_ptr(), tensor.numel() * tensor.element_size(), 0)
+            if status == 0 or getattr(status, 'value', None) == 0:
+                self._registered.append(tensor.data_ptr())
+        return tensor
+
+    def release(self):
+        if self._registered:
+            torch.cuda.synchronize()
+            cudart = torch.cuda.cudart()
+            for pointer in self._registered:
+                cudart.cudaHostUnregister(pointer)
+            self._registered = []
+        self.clear()
+        self.mask_key, self.mask = None, None
+
+    def __del__(self):
+        try:
+            self.release()
+        except Exception:
+            pass
+
+
 class RPT(nn.Module, ModuleUtilsMixin):
     """RPT (sap-rpt-oss) model class.
 
@@ -401,6 +443,56 @@ class RPT(nn.Module, ModuleUtilsMixin):
         test_logits = torch.logit(test_similarities, eps=1e-6)
         test_logits = torch.clip(torch.nan_to_num(test_logits, -1e4), -1e4, 1e4)
         return test_preds, test_logits
+
+    # ------------------------------------------------------------------
+    # KV cache path (inference only)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def build_query_attention_mask(num_context: int, num_query: int, dtype: torch.dtype, device) -> torch.Tensor:
+        """
+        Mask for query rows attending to [context rows; query rows]: every context row is visible, and among
+        the query rows only the row itself, as in build_context_attention_mask.
+        Shape (1, 1, num_query, num_context + num_query), additive (0 attend, finfo.min otherwise).
+        """
+        visible = torch.zeros((num_query, num_context + num_query))
+        visible[:, :num_context] = 1
+        visible[:, num_context:] = torch.eye(num_query)
+        mask = (1.0 - visible) * torch.finfo(visible.dtype).min
+        return mask.to(device).type(dtype).unsqueeze(0).unsqueeze(0)
+
+    @torch.no_grad()
+    def build_context_cache(self, data: dict, is_regression: bool, cache_device: Union[str, torch.device]):
+        """
+        Run the context rows (data holds context rows only) through the encoder once and return a ContextCache:
+        per layer, the cross-row keys and values, each (num_columns, num_heads, num_context, head_dim) on cache_device.
+        """
+        hidden_states = self.embeddings(data, is_regression)
+        cache = ContextCache(cache_device)
+        num_layers = len(self.in_context_encoder)
+        for layer_index, layer in enumerate(self.in_context_encoder):
+            hidden_states, keys, values = layer.forward_context(hidden_states,
+                                                                cache.empty,
+                                                                compute_output=layer_index < num_layers - 1)
+            cache.append((keys, values))
+        return cache
+
+    @torch.no_grad()
+    def forward_with_cache(self, data: dict, is_regression: bool, cache: ContextCache):
+        """Query rows only (data holds query rows only); returns the same outputs as forward() would for them."""
+        hidden_states = self.embeddings(data, is_regression)
+        num_query = hidden_states.shape[0]
+        num_context = cache[0][0].shape[2]
+        # the mask only depends on the shapes: reuse it across test chunks of the same size
+        mask_key = (num_query, hidden_states.dtype, str(hidden_states.device))
+        if cache.mask_key != mask_key:
+            cache.mask = self.build_query_attention_mask(num_context, num_query, hidden_states.dtype,
+                                                         hidden_states.device)
+            cache.mask_key = mask_key
+        attention_mask = cache.mask
+        for layer, (keys, values) in zip(self.in_context_encoder, cache):
+            hidden_states = layer.forward_query(hidden_states, keys, values, attention_mask)
+        target_column_output = hidden_states[:, -1]
+        return self.forward_heads(target_column_output, is_regression, None, data['target'], data['target_delta'])
 
     def forward(self, data: dict[str, torch.Tensor], is_regression: bool, labels=None, **kwargs):
         input_embeds = self.embeddings(data, is_regression)
